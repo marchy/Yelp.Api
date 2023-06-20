@@ -125,6 +125,60 @@ namespace Yelp.Api
         }
 
         #endregion
+
+        #region Match
+
+#nullable enable
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name">The name of the business. Only digits, letters, spaces, and !#$%&+,./:?@'are allowed.</param>
+        /// <param name="addressSummary">The first line of the business's address. Only digits, letters, spaces, and '/#&,.: are allowed. An empty string is allowed; this will specifically match certain service businesses that have no street address.</param>
+        /// <param name="city">The city of the business. Only digits, letters, spaces, and '.() are allowed.</param>
+        /// <param name="stateIsoCode">The ISO 3166-2 (with a few exceptions) state code of this business.</param>
+        /// <param name="countryIsoCode">The ISO 3166-1 alpha-2 country code of this business.</param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public Task<MatchResponse> MatchBusinessAsync(
+            string name, string addressSummary, string city, string stateIsoCode, string countryIsoCode, CancellationToken ct = default
+        ){
+            MatchRequest search = new MatchRequest {
+                Name = name,
+                Address1 = addressSummary,
+                City = city,
+                State = stateIsoCode,
+                Country = countryIsoCode,
+            };
+//            search.Latitude = latitude;
+//            search.Longitude = longitude;
+            return MatchBusinessAsync(search, ct);
+        }
+        
+        /// <summary>
+        /// Searches any and all businesses matching the data in the specified search parameter object.
+        /// </summary>
+        /// <param name="matchRequest">Container object for all search parameters.</param>
+        /// <param name="ct">Cancellation token instance. Use CancellationToken.None if not needed.</param>
+        /// <returns>SearchResponse with businesses matching the specified parameters.</returns>
+        public async Task<MatchResponse> MatchBusinessAsync(MatchRequest matchRequest, CancellationToken ct = default)
+        {
+            // TODO: may not be needed
+            ValidateCoordinates(matchRequest.Latitude, matchRequest.Longitude);
+            ApplyAuthenticationHeaders(ct);
+
+            string queryString = matchRequest.GetChangedProperties().ToQueryString();
+            var response = await GetAsync<MatchResponse>(API_VERSION + "/businesses/matches" + queryString, ct);
+
+            // Set distances based on lat/lon
+//            if (response?.Businesses != null && !double.IsNaN(matchRequest.Latitude) && !double.IsNaN(matchRequest.Longitude))
+//                foreach (var business in response.Businesses)
+//                    business.SetDistanceAway(matchRequest.Latitude, matchRequest.Longitude);
+
+            return response;
+        }
+#nullable restore
+
+        #endregion
         
         #region Autocomplete
 
@@ -219,5 +273,6 @@ namespace Yelp.Api
         #endregion
 
         #endregion
+        
     }
 }
